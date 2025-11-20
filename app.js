@@ -73,7 +73,6 @@ function buildWhatsAppLink(phone, template, label) {
   const text = (template || 'Olá! Gostei do item {label}. Quero um desse.').replace('{label}', label || '')
   return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`
 }
-
 /* --- Toast Notifications --- */
 function showToast(message, type = 'success', duration = 3000) {
   const toast = document.getElementById('toast')
@@ -226,7 +225,7 @@ async function renderProductsList() {
     
     const imgHtml = p.image_url ? 
       `<div class="card-img"><img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}" loading="lazy"></div>` : 
-      `<div class="card-img">📷 Sem imagem</div>`
+      `<div class="card-img"><span class="material-icons-round" aria-hidden="true">photo_camera</span></div>`
     
     const tagsHtml = (p.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')
     
@@ -238,11 +237,11 @@ async function renderProductsList() {
       <div class="price">${formatCurrency(p.price || 0)}</div>
       <div class="card-actions">
         <button class="btn-ghost" data-id="${p.id}" data-action="details" ${p.available === false ? 'disabled' : ''}>
-          👁️ Detalhes
+          <span class="material-icons-round" aria-hidden="true">visibility</span> Detalhes
         </button>
-        <a class="btn-primary" href="${buildWhatsAppLink(p.seller_phone, p.whatsapp_template, p.label)}" target="_blank" rel="noreferrer" ${p.available === false ? 'style="opacity: 0.6; pointer-events: none;"' : ''}>
-          💬 WhatsApp
-        </a>
+        <button class="btn-primary" data-id="${p.id}" data-action="add-cart" ${p.available === false ? 'disabled' : ''}>
+          <span class="material-icons-round" aria-hidden="true">add_shopping_cart</span> Adicionar
+        </button>
       </div>
     `
     container.appendChild(card)
@@ -260,7 +259,7 @@ async function openProductModal(id) {
   
   body.innerHTML = `
     <div class="card-img" style="max-height: 400px;">
-      ${p.image_url ? `<img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}">` : '📷 Sem imagem'}
+      ${p.image_url ? `<img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}">` : `<div class="no-image"><span class="material-icons-round" aria-hidden="true">photo_camera</span> Sem imagem</div>`}
     </div>
     <h2 class="title">${escapeHtml(p.name)} <span class="small-muted">(#${escapeHtml(p.label)})</span></h2>
     <div class="desc">${escapeHtml(p.description || '')}</div>
@@ -268,10 +267,10 @@ async function openProductModal(id) {
     <div class="price" style="font-size: 1.5rem; margin: 20px 0;">${formatCurrency(p.price || 0)}</div>
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
       <button class="btn-ghost" data-id="${p.id}" data-action="add-cart" ${p.available === false ? 'disabled' : ''}>
-        🛒 Adicionar ao carrinho
+        <span class="material-icons-round" aria-hidden="true">add_shopping_cart</span> Adicionar ao carrinho
       </button>
       <a class="btn-primary" href="${buildWhatsAppLink(p.seller_phone, p.whatsapp_template, p.label)}" target="_blank" rel="noreferrer" style="flex: 1;" ${p.available === false ? 'style="opacity: 0.6; pointer-events: none;"' : ''}>
-        💬 Chamar no WhatsApp
+        <span class="material-icons-round" aria-hidden="true">chat</span> Chamar no WhatsApp
       </a>
     </div>
   `
@@ -326,14 +325,14 @@ async function setupAdmin() {
             ${p.available === false ? '<span style="color: var(--error); font-size: 0.8rem;">[Indisponível]</span>' : ''}
           </div>
           <div class="small-muted" style="margin-bottom: 4px;">${escapeHtml(p.description || '')}</div>
-          <div style="font-weight: 600; color: var(--brand);">${formatCurrency(p.price || 0)}</div>
+          <div style="font-weight: 600; color: var(--text);">${formatCurrency(p.price || 0)}</div>
         </div>
         <div class="flex">
-          <button class="btn-ghost" data-id="${p.id}" data-action="edit">✏️ Editar</button>
+          <button class="btn-ghost" data-id="${p.id}" data-action="edit"><span class="material-icons-round" aria-hidden="true">edit</span> Editar</button>
           <button class="btn-ghost" data-id="${p.id}" data-action="toggle-availability">
-            ${p.available === false ? '✅ Disponibilizar' : '⏸️ Suspender'}
+            ${p.available === false ? '<span class="material-icons-round" aria-hidden="true">toggle_on</span> Disponibilizar' : '<span class="material-icons-round" aria-hidden="true">pause_circle</span> Suspender'}
           </button>
-          <button class="btn-ghost" data-id="${p.id}" data-action="delete" style="color: var(--error);">🗑️ Remover</button>
+          <button class="btn-ghost" data-id="${p.id}" data-action="delete" style="color: var(--error);"><span class="material-icons-round" aria-hidden="true">delete</span> Remover</button>
         </div>
       </div>
     `).join('')
@@ -503,6 +502,7 @@ function updateCartCount() {
   const total = cart.reduce((s, i) => s + i.qty, 0)
   const el = document.getElementById('cart-count')
   const btn = document.getElementById('cart-btn')
+  const headerBadge = document.getElementById('header-cart-count')
   
   if (el) el.textContent = total
   if (btn) {
@@ -512,6 +512,9 @@ function updateCartCount() {
       btn.classList.remove('has-items')
     }
   }
+  if (headerBadge) headerBadge.textContent = total
+  const fel = document.getElementById('floating-cart-count')
+  if (fel) fel.textContent = total
 }
 
 function addToCart(productId, qty = 1) {
@@ -525,7 +528,7 @@ function addToCart(productId, qty = 1) {
   }
   
   saveCart(cart)
-  showToast('Produto adicionado ao carrinho! 🛒')
+  showToast('Produto adicionado ao carrinho!')
 }
 
 function removeFromCart(productId) {
@@ -564,10 +567,10 @@ async function renderCartModal() {
   if (cart.length === 0) {
     body.innerHTML = `
       <div style="text-align: center; padding: 40px; color: var(--muted);">
-        <div style="font-size: 3rem; margin-bottom: 16px;">🛒</div>
-        <h3 style="margin-bottom: 8px;">Carrinho vazio</h3>
-        <p>Adicione alguns produtos para ver aqui!</p>
-      </div>
+          <div style="font-size: 3rem; margin-bottom: 16px;"><span class="material-icons-round" aria-hidden="true" style="font-size:3rem">shopping_cart</span></div>
+          <h3 style="margin-bottom: 8px;">Carrinho vazio</h3>
+          <p>Adicione alguns produtos para ver aqui!</p>
+        </div>
     `
     updateCartCount()
     return
@@ -585,15 +588,15 @@ async function renderCartModal() {
             <span class="small-muted">(#${escapeHtml(p.label)})</span>
           </div>
           <div class="small-muted" style="margin-bottom: 4px;">${escapeHtml(p.description || '')}</div>
-          <div style="font-weight: 600; color: var(--brand);">${formatCurrency(p.price || 0)}</div>
+          <div style="font-weight: 600; color: var(--text);">${formatCurrency(p.price || 0)}</div>
         </div>
         <div class="flex" style="align-items: center; gap: 12px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <button class="btn-ghost" data-id="${p.id}" data-action="decrease" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">−</button>
+              <button class="btn-ghost" data-id="${p.id}" data-action="decrease" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">−</button>
             <input type="number" min="1" data-id="${p.id}" class="cart-qty" value="${ci.qty}" style="width: 60px; text-align: center; padding: 4px; min-height: 44px;">
-            <button class="btn-ghost" data-id="${p.id}" data-action="increase" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">+</button>
+              <button class="btn-ghost" data-id="${p.id}" data-action="increase" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">+</button>
           </div>
-          <button class="btn-ghost" data-id="${p.id}" data-action="remove" style="color: var(--error); min-height: 44px;">🗑️</button>
+            <button class="btn-ghost" data-id="${p.id}" data-action="remove" style="color: var(--error); min-height: 44px;"><span class="material-icons-round" aria-hidden="true">delete</span></button>
         </div>
       </div>
     `
@@ -611,14 +614,14 @@ async function renderCartModal() {
     <div style="border-top: 2px solid var(--border); padding-top: 20px; margin-top: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <strong style="font-size: 1.2rem;">Total:</strong>
-        <strong style="font-size: 1.5rem; color: var(--brand);">${formatCurrency(total)}</strong>
+        <strong style="font-size: 1.5rem; color: var(--text);">${formatCurrency(total)}</strong>
       </div>
       <div style="display: flex; gap: 12px; flex-wrap: wrap;">
         <button id="cart-whatsapp" class="btn-primary" style="flex: 2; min-height: 44px;">
-          💬 Enviar pedido via WhatsApp
+          <span class="material-icons-round" aria-hidden="true">chat</span> Enviar pedido via WhatsApp
         </button>
         <button id="cart-clear" class="btn-ghost" style="flex: 1; min-height: 44px;">
-          🗑️ Limpar
+          <span class="material-icons-round" aria-hidden="true">delete</span> Limpar
         </button>
       </div>
     </div>
@@ -736,7 +739,7 @@ function requireAuthOnAdmin() {
 
 /* --- Global Initialization --- */
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 Inicializando Catálogo Online...')
+  console.log('Inicializando Catálogo Online...')
   
   try {
     // Initialize core functionality
@@ -792,16 +795,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.style.overflow = ''
       }
     })
+    // floating cart (small floating button)
+    document.getElementById('floating-cart-btn')?.addEventListener('click', () => {
+      renderCartModal()
+      const modal = document.getElementById('cart-modal')
+      if (modal) {
+        modal.setAttribute('aria-hidden', 'false')
+        document.body.style.overflow = 'hidden'
+      }
+    })
     
     // Initialize auth and cart
     showAdminControls()
     requireAuthOnAdmin()
     updateCartCount()
     
-    console.log('✅ Catálogo Online inicializado com sucesso!')
-    
+    console.log('Catálogo Online inicializado com sucesso!')
+
   } catch (error) {
-    console.error('❌ Erro na inicialização:', error)
+    console.error('Erro na inicialização:', error)
     showToast('Erro ao carregar o catálogo', 'error')
   }
 })

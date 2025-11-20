@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 </head>
 
 <body>
@@ -25,11 +26,11 @@
             <div class="header-actions">
                 <nav class="top-nav">
                     <a id="admin-link" class="btn-ghost" href="admin.html" style="display:none">
-                        <span class="icon">⚙️</span> Painel Admin
+                        <span class="material-icons-round" aria-hidden="true">settings</span> Painel Admin
                     </a>
-                    <button id="cart-btn" class="btn-ghost cart-button" aria-haspopup="dialog" aria-controls="cart-modal">
-                        <span class="icon">🛒</span> Carrinho
-                        (<span id="cart-count">0</span>)
+                    <button id="cart-btn" class="btn-ghost header-cart" aria-haspopup="dialog" aria-controls="cart-modal" title="Abrir carrinho">
+                        <span class="material-icons-round" aria-hidden="true">shopping_cart</span>
+                        <span class="cart-badge" id="header-cart-count">0</span>
                     </button>
                 </nav>
             </div>
@@ -38,7 +39,7 @@
         <div class="container search-container">
             <div class="search-bar" role="search" aria-label="Buscar produtos">
                 <div class="search-input-wrapper">
-                    <span class="search-icon">🔍</span>
+                    <span class="material-icons-round search-icon" aria-hidden="true">search</span>
                     <input id="search" type="search" placeholder="Buscar por nome, etiqueta ou tag..." />
                 </div>
                 <select id="filter-availability" aria-label="Filtrar disponibilidade">
@@ -91,6 +92,10 @@
             <div id="cart-body"></div>
         </div>
     </div>
+        <!-- Floating cart button (keeps functionality while header button removed) -->
+                <button id="floating-cart-btn" class="btn-primary floating-cart" aria-haspopup="dialog" aria-controls="cart-modal" title="Abrir carrinho">
+                    <span class="material-icons-round" aria-hidden="true">shopping_cart</span> <span id="floating-cart-count">0</span>
+                </button>
 
     <!-- Toast notifications -->
     <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
