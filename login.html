@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Entrar - Catálogo Online</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-row">
+            <div class="brand-row">
+                <a class="brand" href="index.html">
+                    <img class="logo" src="img/logo/LOGO%20-%20AZUL-%20OF%20.png" alt="Logo" />
+                </a>
+            </div>
+            <div class="header-actions">
+                <nav class="top-nav">
+                    <a class="btn-ghost" href="index.html">← Voltar ao catálogo</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <div class="card" style="max-width: 400px; margin: 40px auto; padding: 32px;">
+            <h2 style="text-align: center; margin-bottom: 8px;">Acesso Admin</h2>
+            <p style="text-align: center; color: var(--muted); margin-bottom: 32px;">
+                Entre com suas credenciais para gerenciar o catálogo
+            </p>
+            
+            <form id="login-form">
+                <label>
+                    Usuário
+                    <input type="text" id="username" required placeholder="Digite seu usuário">
+                </label>
+                <label>
+                    Senha
+                    <input type="password" id="password" required placeholder="Digite sua senha">
+                </label>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary" style="width: 100%;">Entrar</button>
+                </div>
+            </form>
+            
+            <div style="margin-top: 24px; padding: 16px; background: var(--border-light); border-radius: var(--radius);">
+                <p style="font-size: 0.9rem; color: var(--muted); margin: 0;">
+                    <strong>Credenciais padrão:</strong><br>
+                    Usuário: <code>admin</code><br>
+                    Senha: <code>1234</code>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault()
+            
+            const username = document.getElementById('username').value
+            const password = document.getElementById('password').value
+            
+            // Simple authentication (in production, use proper backend authentication)
+            if (username === 'admin' && password === '1234') {
+                sessionStorage.setItem('admin_auth', '1')
+                sessionStorage.setItem('admin_user', username)
+                alert('Login realizado com sucesso!')
+                window.location.href = 'admin.html'
+            } else {
+                alert('Credenciais inválidas! Tente novamente.')
+            }
+        })
+        
+        // Focus on username field
+        document.getElementById('username').focus()
+    </script>
+</body>
+
+</html>

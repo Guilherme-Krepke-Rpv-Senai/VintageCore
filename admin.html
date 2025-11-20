@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin — Catálogo Online</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-row">
+            <div class="brand-row">
+                <a class="brand" href="index.html">
+                    <img class="logo" src="img/logo/LOGO%20-%20AZUL-%20OF%20.png" alt="Logo" />
+                </a>
+                <div>
+                    <p class="muted">Cadastre, edite e remova produtos (dados salvos localmente no navegador).</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <nav class="top-nav">
+                    <a class="btn-ghost" href="index.html">Ver catálogo</a>
+                    <button id="logout-btn" class="btn-ghost" style="display:none">Sair</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container admin-page">
+        <section class="card">
+            <h2>Cadastrar / Editar produto</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-row">
+                    <label>Etiqueta (SKU)
+                        <input id="label" required placeholder="EX: 0001">
+                    </label>
+                    <label>Nome
+                        <input id="name" required placeholder="Ex: Camiseta Azul">
+                    </label>
+                </div>
+                <label>Descrição
+                    <textarea id="description" placeholder="Breve descrição do produto"></textarea>
+                </label>
+                <div class="form-row">
+                    <label>Preço (R$)
+                        <input id="price" type="number" step="0.01" required>
+                    </label>
+                    <label>Telefone (WhatsApp)
+                        <input id="seller_phone" placeholder="5511999998888" required>
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>Imagem (URL)
+                        <input id="image_url" placeholder="https://.../foto.jpg">
+                    </label>
+                    <label>Etiquetas/tags
+                        <input id="tags" placeholder="separe por vírgula: moda,verao">
+                    </label>
+                </div>
+                <label>Template WhatsApp (use {label})
+                    <input id="whatsapp_template" placeholder="Ola Gostei do item {label}. Quero um desse.">
+                </label>
+                <div class="form-actions">
+                    <button class="btn-primary" type="submit">Salvar produto</button>
+                    <button class="btn-ghost" type="button" id="reset-btn">Limpar</button>
+                </div>
+            </form>
+            <div class="mt-6 kpis">
+                <button id="export-btn" class="btn-ghost">Exportar JSON</button>
+                <label class="btn-ghost" for="import-file">Importar JSON
+                    <input id="import-file" type="file" accept="application/json" style="display:none">
+                </label>
+            </div>
+        </section>
+
+        <section class="card mt-6">
+            <h2>Produtos cadastrados</h2>
+            <div id="admin-list"></div>
+        </section>
+    </main>
+
+    <script src="app.js" defer></script>
+</body>
+
+</html>

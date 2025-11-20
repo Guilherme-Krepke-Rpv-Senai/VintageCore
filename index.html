@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Catálogo online de produtos - Encontre os melhores itens e compre via WhatsApp" />
+    <title>Catálogo Online - Produtos Premium</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-row">
+            <div class="brand-row">
+                <a class="brand" href="index.html" aria-label="Página inicial">
+                    <img class="logo" src="img/logo/LOGO%20-%20AZUL-%20OF%20.png" alt="Logo Catálogo Online" />
+                </a>
+                <div class="brand-text">
+                    <p class="muted">Produtos disponíveis — clique para ver detalhes e chamar no WhatsApp.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <nav class="top-nav">
+                    <a id="admin-link" class="btn-ghost" href="admin.html" style="display:none">
+                        <span class="icon">⚙️</span> Painel Admin
+                    </a>
+                    <a id="login-link" class="btn-ghost" href="login.html">
+                        <span class="icon">🔐</span> Entrar
+                    </a>
+                    <button id="cart-btn" class="btn-ghost cart-button" aria-haspopup="dialog" aria-controls="cart-modal">
+                        <span class="icon">🛒</span> Carrinho
+                        (<span id="cart-count">0</span>)
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <div class="container search-container">
+            <div class="search-bar" role="search" aria-label="Buscar produtos">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input id="search" type="search" placeholder="Buscar por nome, etiqueta ou tag..." />
+                </div>
+                <select id="filter-availability" aria-label="Filtrar disponibilidade">
+                    <option value="all">Todos os produtos</option>
+                    <option value="available">Disponíveis</option>
+                </select>
+                <select id="sort-by" aria-label="Ordenar produtos">
+                    <option value="recent">Mais recentes</option>
+                    <option value="price-asc">Menor preço</option>
+                    <option value="price-desc">Maior preço</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <section class="page-header">
+            <h1 class="page-title">Nossos Produtos</h1>
+            <p class="page-subtitle">Encontre o que precisa e compre diretamente pelo WhatsApp</p>
+        </section>
+        
+        <div class="results-info" id="results-info">
+            <span id="products-count">Carregando...</span>
+            <span id="active-filters" class="active-filters"></span>
+        </div>
+        
+        <section id="products" class="grid" aria-live="polite" aria-label="Lista de produtos">
+            <div class="skeleton-cards">
+                <div class="card skeleton"></div>
+                <div class="card skeleton"></div>
+                <div class="card skeleton"></div>
+                <div class="card skeleton"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Product detail modal -->
+    <div id="product-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+        <div class="modal-content card" role="document">
+            <button id="modal-close" class="btn-ghost modal-close" aria-label="Fechar detalhes do produto">×</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Cart modal -->
+    <div id="cart-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="cart-title">
+        <div class="modal-content card" role="document">
+            <button id="cart-close" class="btn-ghost modal-close" aria-label="Fechar carrinho">×</button>
+            <h2 id="cart-title" class="modal-title">Seu Carrinho</h2>
+            <div id="cart-body"></div>
+        </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; <span id="year"></span> Catálogo Online. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="app.js" defer></script>
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>
