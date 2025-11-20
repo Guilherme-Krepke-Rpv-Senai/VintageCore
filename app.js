@@ -65,8 +65,8 @@ async function idbClear() {
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8) }
 
-// Default WhatsApp contact
-const DEFAULT_WA_NUMBER = '5532999516238'
+// Default WhatsApp contact (forced to user's provided number)
+const DEFAULT_WA_NUMBER = '553299796446'
 
 function buildWhatsAppLink(phone, template, label) {
   const clean = (DEFAULT_WA_NUMBER || '').replace(/[^0-9]/g, '')
