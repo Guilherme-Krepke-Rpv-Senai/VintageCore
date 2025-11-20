@@ -812,6 +812,14 @@ input:focus, textarea:focus, select:focus {
         justify-content: center;
         gap: 12px;
     }
+
+    /* Hide search, filters/results info and floating cart on mobile to show products first */
+    .search-container,
+    #results-info,
+    .active-filters,
+    .floating-cart {
+        display: none !important;
+    }
     
     .top-nav .btn-ghost {
         flex: 1;
