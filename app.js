@@ -809,6 +809,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     showAdminControls()
     requireAuthOnAdmin()
     updateCartCount()
+
+    // Search toggle (header magnifier)
+    const searchToggle = document.getElementById('search-toggle')
+    const searchContainer = document.querySelector('.search-container')
+    if (searchToggle) {
+      searchToggle.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        const open = document.body.classList.toggle('search-open')
+        searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false')
+        if (open) {
+          // focus input after opening
+          setTimeout(() => document.getElementById('search')?.focus(), 50)
+        }
+      })
+    }
+
+    // Close search when clicking outside
+    document.addEventListener('click', (ev) => {
+      if (!document.body.classList.contains('search-open')) return
+      const inside = ev.target.closest('.search-container') || ev.target.closest('#search-toggle')
+      if (!inside) {
+        document.body.classList.remove('search-open')
+        document.getElementById('search-toggle')?.setAttribute('aria-expanded', 'false')
+      }
+    })
+
+    // Close on Escape
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && document.body.classList.contains('search-open')) {
+        document.body.classList.remove('search-open')
+        document.getElementById('search-toggle')?.setAttribute('aria-expanded', 'false')
+      }
+    })
     
     console.log('Catálogo Online inicializado com sucesso!')
 

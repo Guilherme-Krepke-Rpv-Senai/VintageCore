@@ -1,5 +1,5 @@
 :root {
-    --max-width: 1200px;
+    --max-width: 1000px;
     --brand: #000e41;
     --brand-dark: #000e41;
     --accent: #1d99b2;
@@ -91,8 +91,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
-    padding: 16px 0;
+    gap: 12px;
+    padding: 10px 0; /* globally reduced header padding */
 }
 
 .brand-row {
@@ -104,7 +104,7 @@ body {
 }
 
 .logo {
-    height: 48px;
+    height: 40px;
     width: auto;
     display: block;
     flex-shrink: 0;
@@ -225,11 +225,33 @@ body {
 /* Search Bar com fundo sutil */
 .search-container {
     padding: 0 0 16px;
+    display: none; /* hidden by default, opened via header button */
 }
+
+/* When body has .search-open show the search container below header */
+body.search-open .search-container {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--bg);
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-light);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    z-index: 1100;
+}
+
+/* Header search button */
+.header-search { display: inline-flex; align-items: center; justify-content: center; }
+.header-search .material-icons-round { font-size: 1.2rem }
+
+/* Ensure search input stretches inside the revealed container */
+body.search-open .search-input-wrapper { max-width: 100%; }
 
 .search-bar {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 0.5fr auto auto; /* search field reduced to half width */
     gap: 12px;
     align-items: center;
 }
@@ -273,7 +295,7 @@ body {
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
-    min-width: 140px;
+    min-width: 70px; /* reduced to half width */
     backdrop-filter: blur(10px);
 }
 
@@ -287,19 +309,19 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: 32px 0 48px;
+    padding: 16px 0 24px; /* reduced vertical padding to show more content */
 }
 
 .page-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 18px;
 }
 
 .page-title {
-    font-size: 2.5rem;
+    font-size: 1.9rem;
     font-weight: 700;
     color: var(--text);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .page-subtitle {
@@ -349,14 +371,14 @@ body {
 /* Grid & Cards com bordas coloridas sutis */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px; /* tighter gap to fit more cards */
 }
 
 .card {
     background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    padding: 20px;
+    border-radius: 10px;
+    padding: 12px; /* reduced card padding */
     box-shadow: var(--shadow);
     transition: var(--transition);
     display: flex;
@@ -414,9 +436,9 @@ body {
     align-items: center;
     justify-content: center;
     color: var(--text);
-    margin-bottom: 16px;
+    margin-bottom: 10px; /* smaller gap above title */
     overflow: hidden;
-    aspect-ratio: 4/3;
+    aspect-ratio: 3/2; /* slightly shorter images to fit more vertically */
     position: relative;
 }
 
@@ -434,10 +456,10 @@ body {
 
 .card .title {
     font-weight: 600;
-    font-size: 1.1rem;
-    margin: 0 0 8px;
+    font-size: 1rem;
+    margin: 0 0 6px;
     color: var(--text);
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 .card .desc {
