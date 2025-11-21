@@ -377,6 +377,82 @@ body.search-open .search-input-wrapper { max-width: 100%; }
     border: 1px solid var(--border-light);
 }
 
+/* Layout with sidebar and content */
+.layout { display: flex; gap: 20px; align-items: flex-start; }
+.sidebar { width: 220px; flex: 0 0 220px; background: transparent; }
+.content { flex: 1; }
+
+/* Class list items - category sidebar */
+.class-item { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.class-item .class-select { flex: 1; text-align: left; }
+.class-item .class-delete { flex: 0 0 auto; padding: 6px 8px; min-width: 40px; display: inline-flex; align-items: center; justify-content: center; color: var(--error); border-color: rgba(239,68,68,0.12); }
+.class-item .class-delete:hover { background: rgba(239,68,68,0.06); color: var(--error); border-color: rgba(239,68,68,0.18); }
+.class-item .class-delete .material-icons-round { font-size: 1rem; }
+
+/* Compact product card */
+.card.compact { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.compact-row { display:flex; gap:12px; align-items:flex-start; }
+.compact-thumb { width: 140px; height: 100px; flex: 0 0 140px; border-radius:8px; overflow:hidden; background:var(--bg-card); display:flex; align-items:center; justify-content:center }
+.compact-thumb img { width:100%; height:100%; object-fit:cover }
+.compact-thumb.empty { color: var(--muted); }
+.compact-body { flex:1; display:flex; flex-direction:column }
+.card.compact .title { font-size: 1rem; margin:0; }
+.card.compact .price { font-size: 1rem; font-weight:700 }
+
+/* Truncate product description to max 2 lines with ellipsis */
+.compact-body .desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--muted);
+    margin-top: 8px;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+/* Emphasize actions (button) visually and keep description secondary */
+.compact-body .actions { display: flex; gap: 8px; align-items: center }
+.compact-body .actions .btn-primary { 
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    padding: calc(var(--btn-padding-vertical) + 2px) calc(var(--btn-padding-horizontal) + 4px);
+    border-radius: calc(var(--radius) * 0.95);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    will-change: transform, box-shadow;
+}
+.compact-body .actions .btn-primary:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 10px 26px rgba(2,6,23,0.16);
+}
+.compact-body .actions .btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(29,153,178,0.12), 0 8px 20px rgba(2,6,23,0.12);
+}
+.compact-body .actions .btn-primary .material-icons-round { font-size: 1.05rem; }
+.compact-body .title { order: 0; font-weight: 700; font-size: 1.05rem; color: var(--text); }
+.compact-body .price { order: 1; font-size: 1rem; font-weight: 700; color: var(--text); }
+.compact-body .actions { order: 2; }
+.compact-body .desc { order: 3; }
+
+@media (max-width: 900px) {
+    .layout { flex-direction:column }
+    .sidebar { width:100%; flex:0 0 auto; display:flex; overflow:auto }
+}
+
+/* Vertical compact card specifics (image on top, title, actions, description last) */
+.card.compact .card-img { aspect-ratio: 4/3; overflow: hidden; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); }
+.card.compact .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card.compact .title { margin: 6px 0 4px; font-size: 1.05rem; font-weight: 700; color: var(--text); text-decoration: none; }
+.card.compact .title:hover { color: var(--brand); text-decoration: underline; }
+.card.compact .price { font-size: 1rem; font-weight: 700; color: var(--text); }
+.card.compact .actions { display: flex; gap: 8px; align-items: center; }
+.card.compact .desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); margin-top: 8px; font-size: 0.95rem; line-height: 1.3; }
+
+/* Center small action group under title on narrow screens for a tidy layout */
+@media (max-width: 520px) {
+    .card.compact .actions { justify-content: center; }
+}
+
 .active-filters {
     display: flex;
     gap: 8px;

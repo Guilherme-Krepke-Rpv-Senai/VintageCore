@@ -47,6 +47,18 @@ async function idbPutTo(storeName, item) {
   })
 }
 
+// Generic delete for non-products stores
+async function idbDeleteFrom(storeName, id) {
+  const db = await openDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(storeName, 'readwrite')
+    const store = tx.objectStore(storeName)
+    const req = store.delete(id)
+    req.onsuccess = () => res()
+    req.onerror = () => rej(req.error)
+  })
+}
+
 async function idbGetAll() {
   const db = await openDB()
   return new Promise((res, rej) => {
@@ -198,6 +210,9 @@ async function renderProductsList() {
   `
 
   const products = await idbGetAll()
+  // class filter comes from sidebar or URL param
+  const urlParams = new URLSearchParams(location.search)
+  const classFilter = urlParams.get('class') || window.__selectedClass || ''
   const q = (document.getElementById('search')?.value || '').toLowerCase().trim()
   const availability = document.getElementById('filter-availability')?.value || 'all'
   const sortBy = document.getElementById('sort-by')?.value || 'recent'
@@ -208,6 +223,11 @@ async function renderProductsList() {
   if (availability === 'available') {
     list = list.filter(p => p.available !== false)
     filterText.push('Disponíveis')
+  }
+
+  if (classFilter) {
+    list = list.filter(p => (p.class || '') === classFilter)
+    filterText.push(`Classe: ${classFilter}`)
   }
 
   if (q) {
@@ -258,30 +278,25 @@ async function renderProductsList() {
     card.className = `card compact ${p.available === false ? 'unavailable' : ''}`
     card.setAttribute('data-label', p.label)
 
-    const thumb = p.image_url ? `<div class="compact-thumb"><img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}" loading="lazy"></div>` : `<div class="compact-thumb empty"><span class="material-icons-round">photo_camera</span></div>`
+    const imgHtml = p.image_url ? `<img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}" loading="lazy">` : `<div class="no-image"><span class="material-icons-round">photo_camera</span></div>`
 
-    const shortDesc = (p.description || '').split('.').slice(0,1).join('').slice(0,120)
+    const shortDesc = (p.description || '').split('.').slice(0,1).join('').trim().slice(0,240)
 
     card.innerHTML = `
-      <div class="compact-row">
-        ${thumb}
-        <div class="compact-body">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-            <div>
-              <a class="product-link" href="product.html?id=${p.id}"><h3 class="title">${escapeHtml(p.name)}</h3></a>
-              <div class="small-muted" style="margin-top:6px;">${escapeHtml(shortDesc)}${(p.description||'').length>shortDesc.length ? '...' : ''}</div>
-            </div>
-            <div style="text-align:right">
-              <div class="price">${formatCurrency(p.price || 0)}</div>
-            </div>
-          </div>
-          <div style="margin-top:10px; display:flex; gap:8px;">
-            <a class="btn-ghost" href="product.html?id=${p.id}"><span class="material-icons-round">visibility</span></a>
-            <button class="btn-primary" data-id="${p.id}" data-action="add-cart"><span class="material-icons-round">add_shopping_cart</span></button>
-          </div>
+      <div class="card-img">${imgHtml}</div>
+      <a class="product-link" href="product.html?id=${p.id}"><h3 class="title">${escapeHtml(p.name)}</h3></a>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;">
+        <div class="price">${formatCurrency(p.price || 0)}</div>
+        <div class="actions">
+          <a class="btn-ghost" href="product.html?id=${p.id}" aria-label="Ver detalhes"><span class="material-icons-round">visibility</span></a>
+          <button class="btn-primary" data-id="${p.id}" data-action="add-cart" aria-label="Adicionar ao carrinho"><span class="material-icons-round">add_shopping_cart</span></button>
         </div>
       </div>
+
+      <div class="desc">${escapeHtml(shortDesc)}${(p.description||'').length>shortDesc.length ? '...' : ''}</div>
     `
+
     container.appendChild(card)
   })
 }
@@ -605,6 +620,83 @@ async function setupAdmin() {
   await renderAdminList()
 }
 
+// Render class sidebar for public pages
+async function renderClassSidebar() {
+  const el = document.getElementById('class-list')
+  if (!el) return
+  const classes = await idbGetAllFrom('classes')
+  const allBtn = document.createElement('button')
+  allBtn.className = 'btn-ghost'
+  allBtn.textContent = 'Todas'
+  allBtn.addEventListener('click', () => {
+    window.__selectedClass = ''
+    history.replaceState(null, '', location.pathname)
+    renderProductsList()
+  })
+
+  el.innerHTML = ''
+  el.appendChild(allBtn)
+
+  classes.forEach(c => {
+    const wrap = document.createElement('div')
+    wrap.className = 'class-item'
+
+    const b = document.createElement('button')
+    b.className = 'btn-ghost class-select'
+    b.textContent = c.name
+    b.addEventListener('click', () => {
+      window.__selectedClass = c.name
+      const qp = new URLSearchParams(location.search)
+      qp.set('class', c.name)
+      history.replaceState(null, '', location.pathname + '?' + qp.toString())
+      renderProductsList()
+    })
+
+    const isAdmin = isAuthenticated()
+
+    const del = isAdmin ? document.createElement('button') : null
+    if (isAdmin) {
+      del.className = 'btn-ghost class-delete'
+      del.title = 'Excluir classe'
+      del.innerHTML = '<span class="material-icons-round" aria-hidden="true">delete</span>'
+      del.addEventListener('click', async (ev) => {
+        ev.stopPropagation()
+        if (!confirm(`Remover a classe "${c.name}"? Isso também removerá essa categoria de todos os produtos.`)) return
+        try {
+          // delete class from classes store
+          await idbDeleteFrom('classes', c.id)
+
+          // clear the class field from products that referenced it
+          const products = await idbGetAll()
+          const toUpdate = products.filter(p => (p.class || '') === c.name)
+          await Promise.all(toUpdate.map(p => {
+            p.class = ''
+            p.updatedAt = new Date().toISOString()
+            return idbPut(p)
+          }))
+
+          // If current selected class was deleted, clear filter
+          if (window.__selectedClass === c.name) {
+            window.__selectedClass = ''
+            history.replaceState(null, '', location.pathname)
+          }
+
+          await renderClassSidebar()
+          await renderProductsList()
+          showToast('Classe removida e associações limpas', 'warning')
+        } catch (e) {
+          console.error(e)
+          showToast('Erro ao remover classe', 'error')
+        }
+      })
+    }
+
+    wrap.appendChild(b)
+    if (del) wrap.appendChild(del)
+    el.appendChild(wrap)
+  })
+}
+
 /* --- Utilities --- */
 function escapeHtml(s) { 
   return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" })[c]) 
@@ -886,6 +978,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await seedIfEmpty()
     await migrateNamesToCabeceiraCompact()
     await renderProductsList()
+    await renderClassSidebar()
     await setupAdmin()
     
     // Event listeners for main page
