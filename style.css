@@ -21,6 +21,10 @@
     --radius: 8px;
     --radius-lg: 12px;
     --transition: all 0.2s ease-in-out;
+    /* Button sizing */
+    --btn-font: clamp(0.78rem, 0.9vw + 0.45rem, 0.95rem);
+    --btn-padding-vertical: clamp(8px, 0.8vw + 6px, 12px);
+    --btn-padding-horizontal: clamp(10px, 1.2vw + 8px, 20px);
     
     /* Novas cores sutis baseadas na logo */
     --brand-50: #1d99b2;
@@ -41,12 +45,31 @@
 html,
 body {
     height: 100%;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
     color: var(--text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+/* Typographic hierarchy */
+body { font-weight: 400; }
+h1, .page-title { font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+h2 { font-weight: 600; }
+h3 { font-weight: 600; }
+p { font-weight: 400; }
+
+.page-title { font-size: clamp(1.4rem, 2.6vw, 2.2rem); }
+.page-subtitle { font-size: clamp(0.95rem, 1.6vw, 1.1rem); color: var(--muted); font-weight: 500; }
+
+/* Navigation links next to logo */
+.main-nav { display: inline-flex; gap: 8px; align-items: center; }
+.main-nav .nav-link { color: var(--text-light); text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; }
+.main-nav .nav-link:hover { color: var(--brand); background: rgba(29,153,178,0.04); }
+.main-nav .nav-link.active { color: white; background: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%); }
+
+/* Buttons strong weight */
+.btn-primary, .btn-ghost { font-weight: 600; }
 
 body {
     background: var(--bg);
@@ -141,20 +164,21 @@ body {
     background: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: var(--btn-padding-vertical) var(--btn-padding-horizontal);
     border-radius: var(--radius);
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: var(--btn-font);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     transition: var(--transition);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    white-space: nowrap;
-    position: relative;
+    min-width: 0; /* allow flex containers to shrink */
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .btn-primary::before {
@@ -180,16 +204,19 @@ body {
 .btn-ghost {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    padding: 10px 16px;
+    padding: var(--btn-padding-vertical) calc(var(--btn-padding-horizontal) - 6px);
     border-radius: var(--radius);
     color: var(--text-light);
     cursor: pointer;
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: var(--btn-font);
     display: inline-flex;
     align-items: center;
     gap: 6px;
     transition: var(--transition);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -199,6 +226,13 @@ body {
     background: var(--bg-card);
     transform: translateY(-1px);
     box-shadow: var(--shadow);
+}
+
+/* Smaller icon sizes inside buttons to balance text */
+.btn-primary .material-icons-round,
+.btn-ghost .material-icons-round {
+    font-size: 1rem;
+    line-height: 1;
 }
 
 .cart-button {
@@ -501,16 +535,41 @@ body.search-open .search-input-wrapper { max-width: 100%; }
 }
 
 .card-actions .btn-ghost {
-    flex: 1;
+    flex: 1 1 0;
     justify-content: center;
     text-align: center;
     min-height: 44px;
+    padding: calc(var(--btn-padding-vertical) - 2px) calc(var(--btn-padding-horizontal) - 8px);
 }
 
 .card-actions .btn-primary {
-    flex: 2;
+    flex: 2 1 0;
     justify-content: center;
     min-height: 44px;
+    padding: calc(var(--btn-padding-vertical)) calc(var(--btn-padding-horizontal));
+}
+
+/* Reduce the visual size of the card action buttons (Detalhes / Adicionar) by ~35% */
+.card .card-actions .btn-ghost,
+.card .card-actions .btn-primary {
+    --scale-factor: 0.65; /* ~35% smaller */
+    font-size: calc(var(--btn-font) * var(--scale-factor));
+    padding: calc(var(--btn-padding-vertical) * var(--scale-factor)) calc(var(--btn-padding-horizontal) * var(--scale-factor));
+    gap: 6px;
+    border-radius: calc(var(--radius) * 0.9);
+}
+
+.card .card-actions .btn-ghost .material-icons-round,
+.card .card-actions .btn-primary .material-icons-round {
+    font-size: 0.9rem;
+}
+
+/* Make sure truncated text looks good inside small buttons */
+.card .card-actions .btn-ghost,
+.card .card-actions .btn-primary {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 /* Skeleton Loading com cor sutil */
@@ -844,11 +903,11 @@ input:focus, textarea:focus, select:focus {
     }
     
     .top-nav .btn-ghost {
-        flex: 1;
+        flex: 1 1 0;
         justify-content: center;
         text-align: center;
-        font-size: 0.85rem;
-        padding: 12px 8px;
+        font-size: clamp(0.75rem, 0.9vw + 0.3rem, 0.85rem);
+        padding: calc(var(--btn-padding-vertical) - 2px) 8px;
         min-height: 44px;
     }
 }
@@ -936,9 +995,9 @@ input:focus, textarea:focus, select:focus {
     }
     
     .admin-list-item .flex .btn-ghost {
-        flex: 1;
+        flex: 1 1 0;
         min-width: calc(33.333% - 8px);
-        font-size: 0.8rem;
+        font-size: clamp(0.72rem, 0.9vw + 0.2rem, 0.85rem);
         padding: 8px 6px;
         min-height: 40px;
     }
@@ -1049,3 +1108,34 @@ html, body {
 #cart-body {
     -webkit-overflow-scrolling: touch;
 }
+
+/* Admin image drop area */
+.image-drop {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--bg-card);
+    cursor: pointer;
+}
+.image-drop.dragover {
+    border-color: var(--brand);
+    background: rgba(29,153,178,0.06);
+}
+.image-drop img { max-height: 160px; display: block; margin: 8px auto 0 }
+
+/* Color option buttons */
+.color-option {
+    padding: 6px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+}
+.color-option.active {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
+    color: white;
+    border-color: transparent;
+}
+
+/* Import Montserrat from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');

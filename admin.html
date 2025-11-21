@@ -49,18 +49,31 @@
                     <label>Preço (R$)
                         <input id="price" type="number" step="0.01" required>
                     </label>
-                    <label>Telefone (WhatsApp)
-                        <input id="seller_phone" placeholder="5511999998888" required>
+                    <label>Classe
+                        <div style="display:flex; gap:8px; align-items:center;">
+                          <select id="product-class">
+                            <option value="">-- Nenhuma --</option>
+                          </select>
+                          <button type="button" id="add-class-btn" class="btn-ghost">Novo</button>
+                        </div>
                     </label>
                 </div>
                 <div class="form-row">
-                    <label>Imagem (URL)
-                        <input id="image_url" placeholder="https://.../foto.jpg">
+                    <label style="flex:1">Imagem
+                        <div id="image-drop" class="image-drop">
+                          <input id="image_file" type="file" accept="image/*" style="display:none">
+                          <div id="image-drop-inner" style="padding:12px; text-align:center; cursor:pointer;">Arraste ou clique para enviar uma imagem</div>
+                          <img id="image-preview" src="" alt="" style="display:none; max-width:100%; margin-top:8px;">
+                        </div>
+                        <input id="image_url" type="hidden" placeholder="https://.../foto.jpg">
                     </label>
                     <label>Etiquetas/tags
                         <input id="tags" placeholder="separe por vírgula: moda,verao">
                     </label>
                 </div>
+                <label>Colors (separe por vírgula)
+                    <input id="colors" placeholder="Ex: Azul, Preto, Vermelho">
+                </label>
                 <label>Template WhatsApp (use {label})
                     <input id="whatsapp_template" placeholder="Ola Gostei do item {label}. Quero um desse.">
                 </label>

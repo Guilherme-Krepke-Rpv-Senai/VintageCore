@@ -1,0 +1,24 @@
+{
+  "name": "marcelo",
+  "version": "1.0.0",
+  "description": "Um catálogo de produtos moderno e responsivo com integração WhatsApp.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Guilherme-Krepke-Rpv-Senai/catalogo-online.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Guilherme-Krepke-Rpv-Senai/catalogo-online/issues"
+  },
+  "homepage": "https://github.com/Guilherme-Krepke-Rpv-Senai/catalogo-online#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+  }
+}

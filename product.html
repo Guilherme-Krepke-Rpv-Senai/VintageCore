@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Produto — Catálogo Online</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <div class="brand-row">
+        <a class="brand" href="index.html"><img class="logo" src="img/logo/LOGO%20-%20AZUL-%20OF%20.png" alt="Logo"></a>
+        <div class="brand-text"><p class="muted">Detalhes do produto</p></div>
+        <nav class="main-nav" aria-label="Navegação principal" style="margin-left:16px;">
+          <a class="nav-link btn-ghost" href="index.html">Home</a>
+          <a class="nav-link btn-ghost" href="produtos.html">Produtos</a>
+          <a class="nav-link btn-ghost" href="sobre.html">Sobre</a>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <nav class="top-nav">
+          <button id="cart-btn" class="btn-ghost header-cart" title="Abrir carrinho">
+            <span class="material-icons-round">shopping_cart</span>
+            <span class="cart-badge" id="header-cart-count">0</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <div id="product-root">
+      <div class="card">
+        <h1 class="page-title">Carregando...</h1>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p>&copy; <span id="year-prod-page"></span> Catálogo Online.</p></div>
+  </footer>
+
+  <script src="app.js" defer></script>
+  <script>
+    document.getElementById('year-prod-page').textContent = new Date().getFullYear();
+    window.addEventListener('DOMContentLoaded', async () => {
+      const qs = new URLSearchParams(location.search)
+      const id = qs.get('id')
+      if (!id) {
+        document.getElementById('product-root').innerHTML = '<div class="card"><p class="muted">Produto não especificado.</p></div>'
+        return
+      }
+      try {
+        const products = await idbGetAll()
+        const p = products.find(x => x.id === id)
+        if (!p) {
+          document.getElementById('product-root').innerHTML = '<div class="card"><p class="muted">Produto não encontrado.</p></div>'
+          return
+        }
+        document.getElementById('product-root').innerHTML = `
+          <div class="card product-detail">
+            <div style="display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap;">
+              <div style="flex:0 0 360px; max-width:360px;">
+                ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%; border-radius:8px;">` : ''}
+              </div>
+              <div style="flex:1; min-width:260px;">
+                <h1 class="page-title">${escapeHtml(p.name)} <span class="small-muted">(#${escapeHtml(p.label)})</span></h1>
+                <div class="price">${formatCurrency(p.price || 0)}</div>
+                <p class="desc">${escapeHtml(p.description || '')}</p>
+                <div style="margin-top:12px; display:flex; gap:8px;">
+                  <a class="btn-primary" href="${buildWhatsAppLink(null, p.whatsapp_template, p.label)}" target="_blank">Chamar no WhatsApp</a>
+                  <button class="btn-ghost" id="add-to-cart-btn">Adicionar ao carrinho</button>
+                </div>
+                <div style="margin-top:18px;">
+                  <h3>Avaliações</h3>
+                  <div id="reviews"></div>
+                  <div style="margin-top:12px;"><textarea id="review-text" placeholder="Escreva sua avaliação" style="width:100%; min-height:80px;"></textarea><button id="submit-review" class="btn-primary" style="margin-top:8px;">Enviar avaliação</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+
+        // simple reviews stored in localStorage under reviews_<productId>
+        function loadReviews() {
+          const key = 'reviews_' + p.id
+          try { return JSON.parse(localStorage.getItem(key) || '[]') } catch(e){return []}
+        }
+        function renderReviews() {
+          const r = loadReviews()
+          const el = document.getElementById('reviews')
+          if (!el) return
+          if (r.length === 0) el.innerHTML = '<p class="muted">Ainda não há avaliações.</p>'
+          else el.innerHTML = r.map(rv=>`<div style="border-bottom:1px solid var(--border); padding:8px 0;"><strong>${escapeHtml(rv.name||'Anon')}</strong><div class="small-muted" style="font-size:0.9rem">${escapeHtml(rv.text)}</div></div>`).join('')
+        }
+        renderReviews()
+
+        document.getElementById('submit-review').addEventListener('click', ()=>{
+          const txt = document.getElementById('review-text').value.trim()
+          if (!txt) return showToast('Digite uma avaliação', 'warning')
+          const key = 'reviews_' + p.id
+          const arr = loadReviews()
+          arr.unshift({ name: 'Usuário', text: txt, createdAt: new Date().toISOString() })
+          localStorage.setItem(key, JSON.stringify(arr))
+          document.getElementById('review-text').value = ''
+          renderReviews()
+          showToast('Avaliação enviada', 'success')
+        })
+
+        document.getElementById('add-to-cart-btn').addEventListener('click', ()=>{
+          addToCart(p.id, 1)
+        })
+
+      } catch (e) {
+        console.error(e)
+        document.getElementById('product-root').innerHTML = '<div class="card"><p class="muted">Erro ao carregar o produto.</p></div>'
+      }
+    })
+  </script>
+</body>
+</html>

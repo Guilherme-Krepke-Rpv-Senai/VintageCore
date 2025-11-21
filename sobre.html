@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sobre — Catálogo Online</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-row">
+            <div class="brand-row">
+                <a class="brand" href="index.html" aria-label="Página inicial">
+                    <img class="logo" src="img/logo/LOGO%20-%20AZUL-%20OF%20.png" alt="Logo" />
+                </a>
+                <div class="brand-text">
+                    <p class="muted">Informações, regras e contatos do catálogo.</p>
+                </div>
+                <nav class="main-nav" aria-label="Navegação principal" style="margin-left:16px;">
+                    <a class="nav-link btn-ghost" href="index.html">Home</a>
+                    <a class="nav-link btn-ghost" href="produtos.html">Produtos</a>
+                    <a class="nav-link btn-ghost" href="sobre.html">Sobre</a>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <nav class="top-nav">
+                    <a id="admin-link" class="btn-ghost" href="admin.html" style="display:none">
+                        <span class="material-icons-round" aria-hidden="true">settings</span> Painel Admin
+                    </a>
+                    <button id="search-toggle" class="btn-ghost header-search" aria-expanded="false" aria-label="Abrir busca" title="Pesquisar">
+                        <span class="material-icons-round" aria-hidden="true">search</span>
+                    </button>
+                    <button id="cart-btn" class="btn-ghost header-cart" aria-haspopup="dialog" aria-controls="cart-modal" title="Abrir carrinho">
+                        <span class="material-icons-round" aria-hidden="true">shopping_cart</span>
+                        <span class="cart-badge" id="header-cart-count">0</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <section class="page-header">
+            <h1 class="page-title">Sobre</h1>
+            <p class="page-subtitle">Aqui você pode colocar regras, contatos e outras informações.</p>
+        </section>
+
+        <section class="card">
+            <p class="muted">Conteúdo em branco — edite e adicione informações quando desejar.</p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; <span id="year-sobre"></span> Catálogo Online.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year-sobre').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

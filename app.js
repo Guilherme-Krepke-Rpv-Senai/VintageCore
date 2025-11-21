@@ -1,10 +1,11 @@
 // Storage layer: IndexedDB wrapper (async)
 const DB_NAME = 'catalogo_db_v2'
 const STORE = 'products'
+const DB_VERSION = 2 // bump to create additional stores (classes)
 
 function openDB() {
   return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, 1)
+    const req = indexedDB.open(DB_NAME, DB_VERSION)
     req.onupgradeneeded = () => {
       const db = req.result
       if (!db.objectStoreNames.contains(STORE)) {
@@ -13,7 +14,34 @@ function openDB() {
         os.createIndex('createdAt', 'createdAt', { unique: false })
         os.createIndex('available', 'available', { unique: false })
       }
+      // create classes store for taxonomy
+      if (!db.objectStoreNames.contains('classes')) {
+        db.createObjectStore('classes', { keyPath: 'id' })
+      }
     }
+    req.onsuccess = () => res(req.result)
+    req.onerror = () => rej(req.error)
+  })
+}
+
+// Generic helpers for non-products stores
+async function idbGetAllFrom(storeName) {
+  const db = await openDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(storeName, 'readonly')
+    const store = tx.objectStore(storeName)
+    const req = store.getAll()
+    req.onsuccess = () => res(req.result || [])
+    req.onerror = () => rej(req.error)
+  })
+}
+
+async function idbPutTo(storeName, item) {
+  const db = await openDB()
+  return new Promise((res, rej) => {
+    const tx = db.transaction(storeName, 'readwrite')
+    const store = tx.objectStore(storeName)
+    const req = store.put(item)
     req.onsuccess = () => res(req.result)
     req.onerror = () => rej(req.error)
   })
@@ -68,9 +96,16 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // Default WhatsApp contact (forced to user's provided number)
 const DEFAULT_WA_NUMBER = '553299796446'
 
-function buildWhatsAppLink(phone, template, label) {
+function buildWhatsAppLink(phone, template, label, color) {
   const clean = (DEFAULT_WA_NUMBER || '').replace(/[^0-9]/g, '')
-  const text = (template || 'Olá! Gostei do item {label}. Quero um desse.').replace('{label}', label || '')
+  let text = (template || 'Olá! Gostei do item {label}. Quero um desse.').replace('{label}', label || '')
+  if (color) {
+    if (text.includes('{color}')) {
+      text = text.replace('{color}', color)
+    } else {
+      text = `${text} — Cor: ${color}`
+    }
+  }
   return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`
 }
 /* --- Toast Notifications --- */
@@ -220,28 +255,31 @@ async function renderProductsList() {
 
   list.forEach(p => {
     const card = document.createElement('article')
-    card.className = `card ${p.available === false ? 'unavailable' : ''}`
+    card.className = `card compact ${p.available === false ? 'unavailable' : ''}`
     card.setAttribute('data-label', p.label)
-    
-    const imgHtml = p.image_url ? 
-      `<div class="card-img"><img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}" loading="lazy"></div>` : 
-      `<div class="card-img"><span class="material-icons-round" aria-hidden="true">photo_camera</span></div>`
-    
-    const tagsHtml = (p.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')
-    
+
+    const thumb = p.image_url ? `<div class="compact-thumb"><img src="${escapeHtmlAttr(p.image_url)}" alt="${escapeHtmlAttr(p.name)}" loading="lazy"></div>` : `<div class="compact-thumb empty"><span class="material-icons-round">photo_camera</span></div>`
+
+    const shortDesc = (p.description || '').split('.').slice(0,1).join('').slice(0,120)
+
     card.innerHTML = `
-      ${imgHtml}
-      <h3 class="title">${escapeHtml(p.name)} <span class="small-muted">(#${escapeHtml(p.label)})</span></h3>
-      <div class="desc">${escapeHtml(p.description || '')}</div>
-      <div class="product-meta">${tagsHtml}</div>
-      <div class="price">${formatCurrency(p.price || 0)}</div>
-      <div class="card-actions">
-        <button class="btn-ghost" data-id="${p.id}" data-action="details" ${p.available === false ? 'disabled' : ''}>
-          <span class="material-icons-round" aria-hidden="true">visibility</span> Detalhes
-        </button>
-        <button class="btn-primary" data-id="${p.id}" data-action="add-cart" ${p.available === false ? 'disabled' : ''}>
-          <span class="material-icons-round" aria-hidden="true">add_shopping_cart</span> Adicionar
-        </button>
+      <div class="compact-row">
+        ${thumb}
+        <div class="compact-body">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <div>
+              <a class="product-link" href="product.html?id=${p.id}"><h3 class="title">${escapeHtml(p.name)}</h3></a>
+              <div class="small-muted" style="margin-top:6px;">${escapeHtml(shortDesc)}${(p.description||'').length>shortDesc.length ? '...' : ''}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="price">${formatCurrency(p.price || 0)}</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <a class="btn-ghost" href="product.html?id=${p.id}"><span class="material-icons-round">visibility</span></a>
+            <button class="btn-primary" data-id="${p.id}" data-action="add-cart"><span class="material-icons-round">add_shopping_cart</span></button>
+          </div>
+        </div>
       </div>
     `
     container.appendChild(card)
@@ -265,11 +303,12 @@ async function openProductModal(id) {
     <div class="desc">${escapeHtml(p.description || '')}</div>
     <div class="product-meta">${(p.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ')}</div>
     <div class="price" style="font-size: 1.5rem; margin: 20px 0;">${formatCurrency(p.price || 0)}</div>
+    ${p.colors && p.colors.length ? `<div class="colors-row" style="margin: 12px 0;">Cores: ${p.colors.map(c => `<button class="color-option" data-color="${escapeHtmlAttr(c)}" type="button" style="margin-right:6px;">${escapeHtml(c)}</button>`).join('')}</div>` : ''}
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <button class="btn-ghost" data-id="${p.id}" data-action="add-cart" ${p.available === false ? 'disabled' : ''}>
+      <button class="btn-ghost" id="modal-add-cart" data-id="${p.id}" data-action="add-cart" ${p.available === false ? 'disabled' : ''}>
         <span class="material-icons-round" aria-hidden="true">add_shopping_cart</span> Adicionar ao carrinho
       </button>
-      <a class="btn-primary" href="${buildWhatsAppLink(p.seller_phone, p.whatsapp_template, p.label)}" target="_blank" rel="noreferrer" style="flex: 1;" ${p.available === false ? 'style="opacity: 0.6; pointer-events: none;"' : ''}>
+      <a id="modal-wpp" class="btn-primary" href="${buildWhatsAppLink(null, p.whatsapp_template, p.label)}" target="_blank" rel="noreferrer" style="flex: 1;" ${p.available === false ? 'style="opacity: 0.6; pointer-events: none;"' : ''}>
         <span class="material-icons-round" aria-hidden="true">chat</span> Chamar no WhatsApp
       </a>
     </div>
@@ -277,6 +316,32 @@ async function openProductModal(id) {
   
   modal.setAttribute('aria-hidden', 'false')
   document.body.style.overflow = 'hidden'
+
+  // Handle color selection inside modal
+  (function() {
+    let selected = (p.colors && p.colors[0]) || ''
+    const colorButtons = body.querySelectorAll('.color-option')
+    colorButtons.forEach((btn, idx) => {
+      if (btn.dataset.color === selected) btn.classList.add('active')
+      btn.addEventListener('click', () => {
+        colorButtons.forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        selected = btn.dataset.color
+        // update add-cart dataset and whatsapp link
+        const addBtn = document.getElementById('modal-add-cart')
+        if (addBtn) addBtn.dataset.color = selected
+        const wpp = document.getElementById('modal-wpp')
+        if (wpp) wpp.href = buildWhatsAppLink(null, p.whatsapp_template, p.label, selected)
+      })
+    })
+    // initialize link with default color
+    if (selected) {
+      const wpp = document.getElementById('modal-wpp')
+      if (wpp) wpp.href = buildWhatsAppLink(null, p.whatsapp_template, p.label, selected)
+      const addBtn = document.getElementById('modal-add-cart')
+      if (addBtn) addBtn.dataset.color = selected
+    }
+  })()
 }
 
 function closeProductModal() {
@@ -300,10 +365,15 @@ async function setupAdmin() {
     name: document.getElementById('name'),
     description: document.getElementById('description'),
     price: document.getElementById('price'),
-    seller_phone: document.getElementById('seller_phone'),
+    // seller_phone removed — we use global DEFAULT_WA_NUMBER
     whatsapp_template: document.getElementById('whatsapp_template'),
     image_url: document.getElementById('image_url'),
+    image_file: document.getElementById('image_file'),
+    image_preview: document.getElementById('image-preview'),
+    product_class: document.getElementById('product-class'),
+    add_class_btn: document.getElementById('add-class-btn'),
     tags: document.getElementById('tags'),
+    colors: document.getElementById('colors'),
     resetBtn: document.getElementById('reset-btn')
   }
 
@@ -326,6 +396,7 @@ async function setupAdmin() {
           </div>
           <div class="small-muted" style="margin-bottom: 4px;">${escapeHtml(p.description || '')}</div>
           <div style="font-weight: 600; color: var(--text);">${formatCurrency(p.price || 0)}</div>
+          <div class="small-muted" style="margin-top:6px;">Classe: ${escapeHtml(p.class || '')} ${p.colors && p.colors.length ? '| Cores: ' + p.colors.map(c=>escapeHtml(c)).join(', ') : ''}</div>
         </div>
         <div class="flex">
           <button class="btn-ghost" data-id="${p.id}" data-action="edit"><span class="material-icons-round" aria-hidden="true">edit</span> Editar</button>
@@ -350,10 +421,12 @@ async function setupAdmin() {
       name: elements.name.value.trim(),
       description: elements.description.value.trim(),
       price: Number(elements.price.value) || 0,
-      seller_phone: elements.seller_phone.value.trim(),
+      // seller_phone removed — using global DEFAULT_WA_NUMBER
       whatsapp_template: elements.whatsapp_template.value.trim() || 'Olá! Gostei do item {label}. Quero um desse.',
       image_url: elements.image_url.value.trim(),
       tags: elements.tags.value.split(',').map(s => s.trim()).filter(Boolean),
+      class: elements.product_class?.value || '',
+      colors: (elements.colors?.value || '').split(',').map(s => s.trim()).filter(Boolean),
       available: existingProduct ? existingProduct.available : true,
       createdAt: existingProduct ? existingProduct.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -366,6 +439,64 @@ async function setupAdmin() {
     await renderProductsList()
     showToast('Produto salvo com sucesso!')
   })
+
+  // Populate classes select
+  async function populateClasses() {
+    const classes = await idbGetAllFrom('classes')
+    const sel = elements.product_class
+    if (!sel) return
+    const current = sel.value
+    sel.innerHTML = '<option value="">-- Nenhuma --</option>' + classes.map(c => `<option value="${escapeHtmlAttr(c.name)}">${escapeHtml(c.name)}</option>`).join('')
+    if (current) sel.value = current
+  }
+
+  elements.add_class_btn.addEventListener('click', async () => {
+    const name = prompt('Nome da nova classe:')
+    if (!name) return
+    await idbPutTo('classes', { id: uid(), name: name.trim() })
+    await populateClasses()
+    showToast('Classe adicionada', 'success')
+  })
+
+  // Image upload / drag & drop
+  const drop = document.getElementById('image-drop')
+  if (drop) {
+    drop.addEventListener('click', () => elements.image_file.click())
+    drop.addEventListener('dragover', (ev) => { ev.preventDefault(); drop.classList.add('dragover') })
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'))
+    drop.addEventListener('drop', async (ev) => {
+      ev.preventDefault(); drop.classList.remove('dragover')
+      const f = ev.dataTransfer.files && ev.dataTransfer.files[0]
+      if (f) await handleImageFile(f)
+    })
+  }
+
+  elements.image_file.addEventListener('change', async (ev) => {
+    const f = ev.target.files && ev.target.files[0]
+    if (f) await handleImageFile(f)
+  })
+
+  async function handleImageFile(file) {
+    try {
+      const fd = new FormData()
+      fd.append('imagem', file)
+      const res = await fetch('/upload', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error('Upload falhou')
+      const json = await res.json()
+      const path = json.path || (`img/produtos/${json.arquivo}`)
+      elements.image_url.value = path
+      if (elements.image_preview) {
+        elements.image_preview.src = path
+        elements.image_preview.style.display = 'block'
+      }
+      showToast('Imagem enviada com sucesso', 'success')
+    } catch (e) {
+      console.error(e)
+      showToast('Erro ao enviar imagem: ' + e.message, 'error')
+    }
+  }
+
+  await populateClasses()
 
   elements.resetBtn.addEventListener('click', () => {
     form.reset()
@@ -390,10 +521,14 @@ async function setupAdmin() {
       elements.name.value = p.name
       elements.description.value = p.description
       elements.price.value = p.price
-      elements.seller_phone.value = p.seller_phone
       elements.whatsapp_template.value = p.whatsapp_template
       elements.image_url.value = p.image_url
+      if (elements.image_preview) {
+        if (p.image_url) { elements.image_preview.src = p.image_url; elements.image_preview.style.display = 'block' } else { elements.image_preview.style.display = 'none' }
+      }
       elements.tags.value = (p.tags || []).join(', ')
+      if (elements.product_class) elements.product_class.value = p.class || ''
+      if (elements.colors) elements.colors.value = (p.colors || []).join(', ')
       
       window.scrollTo({ top: 0, behavior: 'smooth' })
       showToast(`Editando: ${p.name}`)
@@ -517,39 +652,41 @@ function updateCartCount() {
   if (fel) fel.textContent = total
 }
 
-function addToCart(productId, qty = 1) {
+function addToCart(productId, qty = 1, opts = {}) {
+  const color = opts.color || null
   const cart = getCart()
-  const item = cart.find(c => c.id === productId)
-  
+  const key = `${productId}||${color || ''}`
+  const item = cart.find(c => c.key === key)
+
   if (item) {
     item.qty += qty
   } else {
-    cart.push({ id: productId, qty, addedAt: new Date().toISOString() })
+    cart.push({ key, id: productId, qty, color, addedAt: new Date().toISOString() })
   }
-  
+
   saveCart(cart)
   showToast('Produto adicionado ao carrinho!')
 }
 
-function removeFromCart(productId) {
+function removeFromCart(itemKey) {
   let cart = getCart()
-  const item = cart.find(c => c.id === productId)
-  cart = cart.filter(c => c.id !== productId)
+  const item = cart.find(c => c.key === itemKey)
+  cart = cart.filter(c => c.key !== itemKey)
   saveCart(cart)
   renderCartModal()
-  
+
   if (item) {
     showToast('Produto removido do carrinho', 'warning')
   }
 }
 
-function changeQty(productId, qty) {
+function changeQty(itemKey, qty) {
   const cart = getCart()
-  const item = cart.find(c => c.id === productId)
+  const item = cart.find(c => c.key === itemKey)
   if (!item) return
-  
+
   if (qty <= 0) {
-    removeFromCart(productId)
+    removeFromCart(itemKey)
   } else {
     item.qty = qty
     saveCart(cart)
@@ -579,7 +716,7 @@ async function renderCartModal() {
   const cartItems = cart.map(ci => {
     const p = products.find(x => x.id === ci.id)
     if (!p) return ''
-    
+    const colorLine = ci.color ? `<div class="small-muted" style="margin-top:6px;">Cor: ${escapeHtml(ci.color)}</div>` : ''
     return `
       <div class="admin-list-item">
         <div style="flex: 1;">
@@ -589,14 +726,15 @@ async function renderCartModal() {
           </div>
           <div class="small-muted" style="margin-bottom: 4px;">${escapeHtml(p.description || '')}</div>
           <div style="font-weight: 600; color: var(--text);">${formatCurrency(p.price || 0)}</div>
+          ${colorLine}
         </div>
         <div class="flex" style="align-items: center; gap: 12px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-              <button class="btn-ghost" data-id="${p.id}" data-action="decrease" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">−</button>
-            <input type="number" min="1" data-id="${p.id}" class="cart-qty" value="${ci.qty}" style="width: 60px; text-align: center; padding: 4px; min-height: 44px;">
-              <button class="btn-ghost" data-id="${p.id}" data-action="increase" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">+</button>
+              <button class="btn-ghost" data-key="${ci.key}" data-action="decrease" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">−</button>
+            <input type="number" min="1" data-key="${ci.key}" class="cart-qty" value="${ci.qty}" style="width: 60px; text-align: center; padding: 4px; min-height: 44px;">
+              <button class="btn-ghost" data-key="${ci.key}" data-action="increase" style="padding: 4px 8px; font-size: 1.2rem; min-height: 44px;">+</button>
           </div>
-            <button class="btn-ghost" data-id="${p.id}" data-action="remove" style="color: var(--error); min-height: 44px;"><span class="material-icons-round" aria-hidden="true">delete</span></button>
+            <button class="btn-ghost" data-key="${ci.key}" data-action="remove" style="color: var(--error); min-height: 44px;"><span class="material-icons-round" aria-hidden="true">delete</span></button>
         </div>
       </div>
     `
@@ -632,32 +770,32 @@ async function renderCartModal() {
   // Attach event listeners
   body.querySelectorAll('.cart-qty').forEach(inp => {
     inp.addEventListener('change', (ev) => {
-      const id = ev.target.dataset.id
+      const key = ev.target.dataset.key
       const v = Number(ev.target.value) || 1
-      changeQty(id, v)
+      changeQty(key, v)
     })
   })
   
   body.querySelectorAll('button[data-action="increase"]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.id
-      const cart = getCart()
-      const item = cart.find(c => c.id === id)
-      if (item) changeQty(id, item.qty + 1)
+      const key = btn.dataset.key
+      const cartNow = getCart()
+      const item = cartNow.find(c => c.key === key)
+      if (item) changeQty(key, item.qty + 1)
     })
   })
   
   body.querySelectorAll('button[data-action="decrease"]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.id
-      const cart = getCart()
-      const item = cart.find(c => c.id === id)
-      if (item) changeQty(id, item.qty - 1)
+      const key = btn.dataset.key
+      const cartNow = getCart()
+      const item = cartNow.find(c => c.key === key)
+      if (item) changeQty(key, item.qty - 1)
     })
   })
   
   body.querySelectorAll('button[data-action="remove"]').forEach(btn => {
-    btn.addEventListener('click', () => removeFromCart(btn.dataset.id))
+    btn.addEventListener('click', () => removeFromCart(btn.dataset.key))
   })
   
   document.getElementById('cart-clear').addEventListener('click', () => {
@@ -680,7 +818,9 @@ async function renderCartModal() {
     
     const items = cartNow.map(ci => {
       const p = productsAll.find(x => x.id === ci.id)
-      return p ? `${p.name} (${ci.qty}x - ${formatCurrency(p.price * ci.qty)})` : `Produto ${ci.id}`
+      if (!p) return `Produto ${ci.id}`
+      const colorText = ci.color ? ` - cor: ${ci.color}` : ''
+      return `${p.name}${colorText} (${ci.qty}x - ${formatCurrency((p.price || 0) * ci.qty)})`
     })
     
     const total = cartNow.reduce((sum, ci) => {
@@ -762,7 +902,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       const action = btn.dataset.action
       
       if (action === 'details') openProductModal(id)
-      if (action === 'add-cart') addToCart(id)
+      if (action === 'add-cart') {
+        const color = btn.dataset.color || null
+        addToCart(id, 1, { color })
+      }
+    })
+
+    // Global fallback for add-cart buttons that are outside #products (e.g. modal)
+    document.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button')
+      if (!btn) return
+      // if inside #products, ignore (already handled)
+      if (btn.closest('#products')) return
+      const action = btn.dataset.action
+      if (action === 'add-cart') {
+        const id = btn.dataset.id
+        const color = btn.dataset.color || null
+        if (id) addToCart(id, 1, { color })
+      }
     })
     
     // Modal controls
@@ -844,6 +1001,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
     
     console.log('Catálogo Online inicializado com sucesso!')
+
+    // Mark active nav link (works across pages)
+    try {
+      document.querySelectorAll('.main-nav .nav-link').forEach(a => {
+        try {
+          const aPath = new URL(a.href, location.origin).pathname.replace(/\/+$/, '')
+          const cur = location.pathname.replace(/\/+$/, '')
+          if (aPath === cur || (aPath === '/index.html' && (cur === '/' || cur === '/index.html'))) {
+            a.classList.add('active')
+          } else {
+            a.classList.remove('active')
+          }
+        } catch (e) { /* ignore */ }
+      })
+    } catch (e) { /* ignore */ }
 
   } catch (error) {
     console.error('Erro na inicialização:', error)

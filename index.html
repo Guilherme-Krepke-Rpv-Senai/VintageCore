@@ -22,6 +22,11 @@
                 <div class="brand-text">
                     <p class="muted">Produtos disponíveis — clique para ver detalhes e chamar no WhatsApp.</p>
                 </div>
+                <nav class="main-nav" aria-label="Navegação principal" style="margin-left:16px;">
+                    <a class="nav-link btn-ghost" href="index.html">Home</a>
+                    <a class="nav-link btn-ghost" href="produtos.html">Produtos</a>
+                    <a class="nav-link btn-ghost" href="sobre.html">Sobre</a>
+                </nav>
             </div>
             <div class="header-actions">
                 <nav class="top-nav">
@@ -63,20 +68,27 @@
             <h1 class="page-title">Nossos Produtos</h1>
             <p class="page-subtitle">Encontre o que precisa e compre diretamente pelo WhatsApp</p>
         </section>
-        
+
         <div class="results-info" id="results-info">
             <span id="products-count">Carregando...</span>
             <span id="active-filters" class="active-filters"></span>
         </div>
-        
-        <section id="products" class="grid" aria-live="polite" aria-label="Lista de produtos">
+
+        <div class="layout">
+          <aside class="sidebar" id="class-sidebar" aria-label="Categorias">
+            <div style="padding:12px; font-weight:600;">Categorias</div>
+            <div id="class-list" style="display:flex; flex-direction:column; gap:6px; padding:12px;"></div>
+          </aside>
+
+          <section id="products" class="grid content" aria-live="polite" aria-label="Lista de produtos">
             <div class="skeleton-cards">
                 <div class="card skeleton"></div>
                 <div class="card skeleton"></div>
                 <div class="card skeleton"></div>
                 <div class="card skeleton"></div>
             </div>
-        </section>
+          </section>
+        </div>
     </main>
 
     <!-- Product detail modal -->
